@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Fashion Style — Pakistan's premium fashion destination. Shop curated collections of shirts, pants, jackets, hoodies, shoes & accessories." />
+  <meta name="theme-color" content="#0a0a0a" />
+
+  <!-- ── Tab Title & Favicon ── -->
+  <title>Fashion Style | Premium Collection</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230a0a0a'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-size='20' font-weight='700' fill='%23c9a84c'>F</text></svg>" />
+
+  <!-- ── Google Fonts (preconnect for speed) ── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Jost:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- ── Base Styles (prevents flash of unstyled content) ── -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --black: #0a0a0a;
+      --white: #fafaf8;
+      --grey-100: #f4f4f2;
+      --serif: 'Cormorant Garamond', Georgia, serif;
+      --sans: 'Jost', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--white);
+      color: var(--black);
+      font-weight: 300;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── Loading Splash (shown before React mounts) ── */
+    #app-loading {
+      position: fixed;
+      inset: 0;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+    }
+
+    #app-loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-logo {
+      width: 56px;
+      height: 56px;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-logo span {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .loading-title {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--black);
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--grey-100);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-sub {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #9a9a94;
+    }
+
+    .firebase-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      margin-top: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Root mount target ── */
+    #root {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       LOADING SPLASH  — hidden once React finishes mounting
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="app-loading">
+    <div class="loading-logo"><span>F</span></div>
+    <div class="loading-title">Fashion Style</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-sub">Connecting to Firebase…</div>
+    <div class="firebase-badge">
+      🔥 <span>my-website-zk.firebaseapp.com</span>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       REACT ROOT — your entire app mounts here
+       ════════════════════════════════════════════════════════════════════ -->
+  <div id="root"></div>
+
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       🔥 FIREBASE SDK  (loaded as ES modules via CDN)
+          All Firebase services your app needs are initialised here.
+          This block runs BEFORE your React bundle so Firebase is
+          ready the moment your components call FB.* functions.
+       ════════════════════════════════════════════════════════════════════ -->
+  <script type="module">
+
+    // ── 1. Import Firebase SDK modules from the official CDN ──────────────
+    import { initializeApp }                    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAnalytics }                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged,
+    }                                           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      getDocs,
+      query,
+      orderBy,
+      serverTimestamp,
+    }                                           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getStorage,
+      ref          as storageRef,
+      uploadBytes,
+      getDownloadURL,
+    }                                           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+
+    // ── 2. Your Firebase configuration ───────────────────────────────────
+    //    (copied exactly from Firebase Console → Project Settings)
+    const firebaseConfig = {
+      apiKey:            "AIzaSyCaOxWsQbrZnzfcoLsfvXAFpRe5V9KbTOA",
+      authDomain:        "my-website-zk.firebaseapp.com",
+      projectId:         "my-website-zk",
+      storageBucket:     "my-website-zk.firebasestorage.app",
+      messagingSenderId: "216063559716",
+      appId:             "1:216063559716:web:35d59b96958e79403670b1",
+      measurementId:     "G-V9N1DELZQY",
+    };
+
+
+    // ── 3. Initialise Firebase ────────────────────────────────────────────
+    const firebaseApp = initializeApp(firebaseConfig);
+    const analytics   = getAnalytics(firebaseApp);   // Google Analytics
+    const auth        = getAuth(firebaseApp);         // Authentication
+    const db          = getFirestore(firebaseApp);    // Firestore
+    const storage     = getStorage(firebaseApp);      // Storage
+
+
+    // ── 4. Expose Firebase services on window so React (App.jsx) can use them
+    //       without needing to re-initialise.  Your FB.* wrapper in App.jsx
+    //       should read from window.__firebase instead of calling initializeApp
+    //       again (double init causes warnings).
+    window.__firebase = {
+      app:      firebaseApp,
+      auth,
+      db,
+      storage,
+      analytics,
+
+      // ── Auth helpers ──────────────────────────────────────────────────
+      login:        (email, password)  => signInWithEmailAndPassword(auth, email, password).then(c => c.user),
+      logout:       ()                 => signOut(auth),
+      currentUser:  ()                 => auth.currentUser,
+      onAuthChange: (cb)               => onAuthStateChanged(auth, cb),
+
+      // ── Products (collection: "products") ────────────────────────────
+      getProducts: async () => {
+        const snap = await getDocs(query(collection(db, "products"), orderBy("createdAt", "desc")));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      },
+
+      addProduct: async (data) => {
+        const ref = await addDoc(collection(db, "products"), {
+          ...data,
+          rating:    0,
+          reviews:   0,
+          createdAt: serverTimestamp(),
+        });
+        return { id: ref.id, ...data, rating: 0, reviews: 0 };
+      },
+
+      updateProduct: async (id, data) => {
+        await updateDoc(doc(db, "products", id), { ...data, updatedAt: serverTimestamp() });
+      },
+
+      deleteProduct: async (id) => {
+        await deleteDoc(doc(db, "products", id));
+      },
+
+      // ── Orders (collection: "orders") ────────────────────────────────
+      getOrders: async () => {
+        const snap = await getDocs(query(collection(db, "orders"), orderBy("createdAt", "desc")));
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      },
+
+      addOrder: async (data) => {
+        const ref = await addDoc(collection(db, "orders"), {
+          ...data,
+          status:    "Pending",
+          createdAt: serverTimestamp(),
+        });
+        return { id: ref.id, ...data };
+      },
+
+      // ── Images (Firebase Storage: /products/<timestamp>_<name>) ──────
+      uploadImage: async (file) => {
+        const path   = `products/${Date.now()}_${file.name}`;
+        const imgRef = storageRef(storage, path);
+        await uploadBytes(imgRef, file);
+        return await getDownloadURL(imgRef);   // public HTTPS URL
+      },
+    };
+
+    console.log(
+      "%c🔥 Firebase ready — project: my-website-zk",
+      "color:#c9a84c;font-weight:600;font-size:13px;"
+    );
+
+  </script>
+
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       REACT + VITE BUNDLE
+       ════════════════════════════════════════════════════════════════════
+       If you are using Vite (recommended), this script tag is all you need.
+       Vite will serve /src/main.jsx which should import App.jsx.
+       ════════════════════════════════════════════════════════════════════ -->
+  <script type="module" src="/src/main.jsx"></script>
+
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       Hide loading splash once React mounts
+       ════════════════════════════════════════════════════════════════════ -->
+  <script>
+    // React calls ReactDOM.createRoot('#root').render(...)
+    // We watch for the first child to appear in #root, then fade out splash.
+    const observer = new MutationObserver(() => {
+      if (document.getElementById("root")?.children.length > 0) {
+        const splash = document.getElementById("app-loading");
+        if (splash) {
+          splash.classList.add("hidden");
+          setTimeout(() => splash.remove(), 500);
+        }
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.getElementById("root"), { childList: true });
+  </script>
+
+</body>
+</html>
